@@ -8,7 +8,7 @@ class Pagination {
             current_page: data.current_page,
             last_page: data.last_page,
             next_page_url: data.next_page_url,
-            prev_page_url: data.prev_page_url
+            prev_page_url: data.prev_page_url,
         }
     }
 }

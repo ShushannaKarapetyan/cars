@@ -39,15 +39,18 @@
                                             <label for="year">Select Year</label>
                                             <date-picker
                                                 id="year"
-                                                v-model="car.year"
+                                                v-model="dateFull"
                                                 type="year"
                                                 format="YYYY"
-                                                name="year"
+                                                placeholder="Year"
                                                 class="w-100"
+                                                @change="clear()"
                                                 :class="{'is-invalid': errors.hasOwnProperty('year')}"
+                                                :input-class="{'form-control':true, 'is-invalid': errors.hasOwnProperty('year')}"
                                             >
                                             </date-picker>
-                                            <span v-if="errors.hasOwnProperty('year')" class="invalid-feedback"
+                                            <span v-if="errors.hasOwnProperty('year')"
+                                                  class="invalid-feedback"
                                                   v-text="errors.year[0]"></span>
                                         </div>
                                         <div class="form-group col-md-6">
@@ -93,21 +96,27 @@
                     year: '',
                     price: '',
                 },
+                dateFull: '',
                 errors: [],
             }
         },
 
         methods: {
             add() {
-                this.car.year = new Date(this.car.year).getFullYear();
+                this.car.year = new Date(this.dateFull).getFullYear();
+
+                if (!this.dateFull) {
+                    this.car.year = '';
+                }
 
                 axios.post('/cars', this.$data.car)
                     .then(response => {
                         this.car.make = '';
                         this.car.model = '';
+                        this.dateFull = '';
                         this.car.price = '';
 
-                        alert(response.data.message);
+                        this.$swal('Done!', response.data.message, 'success');
                     })
                     .catch(error => {
                         this.errors = error.response.data.errors;
@@ -122,7 +131,7 @@
                 }
 
                 this.errors = [];
-            }
+            },
         },
     }
 </script>

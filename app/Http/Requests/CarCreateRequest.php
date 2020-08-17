@@ -2,11 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Car;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
 
-class CarsRequest extends FormRequest
+class CarCreateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -29,7 +28,7 @@ class CarsRequest extends FormRequest
             'make' => 'required|min:3',
             'model' => 'required|min:3',
             'year' => 'required|integer|max:' . (Carbon::now()->parse('Y')),
-            'price' => "required|regex:/^\d+(\.\d{1,2})?$/",
+            'price' => 'required|regex:/^\d+(\.\d{1,2})?$/',
         ];
     }
 }

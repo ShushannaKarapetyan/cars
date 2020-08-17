@@ -11,11 +11,11 @@
                             <div class="search-box d-flex">
                                 <input type="text"
                                        name="search"
-                                       @keyup="getSearchResult()"
+                                       @keydown.enter="getFilteredResult()"
                                        v-model="search"
                                        placeholder="Search by make..."
                                        class="form-control search">
-                                <button type="submit" @click="getSearchResult()">
+                                <button type="submit" @click="getFilteredResult()">
                                     <i class="fas fa-search"></i>
                                 </button>
                             </div>
@@ -23,10 +23,10 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table v-if="cars.length" class="table table-hover table-striped">
+                            <table v-if="cars.length" class="table table-hover table-striped" v-cloak>
                                 <thead class="text-primary">
                                 <tr>
-                                    <th>N</th>
+                                    <th>ID</th>
                                     <th>Make</th>
                                     <th>Model</th>
                                     <th>Year</th>
@@ -34,8 +34,8 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="(car, index) in cars" :key="index">
-                                    <td>{{ index + 1 }}</td>
+                                <tr v-for="car in cars" :key="car.id">
+                                    <td>{{ car.id }}</td>
                                     <td>{{ car.make}}</td>
                                     <td>{{ car.model}}</td>
                                     <td>{{ car.year}}</td>
@@ -43,7 +43,7 @@
                                 </tr>
                                 </tbody>
                             </table>
-                            <h2 v-else v-cloak>No cars.</h2>
+                            <h2 v-else>No cars.</h2>
                         </div>
                     </div>
                     <div v-if="cars.length" class="card-footer">
@@ -87,9 +87,11 @@
         data() {
             return {
                 cars: [],
+                carList: [],
                 search: '',
                 url: '/cars',
                 pagination: new Pagination(),
+                searching: false,
             }
         },
 
@@ -99,27 +101,38 @@
 
         methods: {
             getCars() {
+                this.searching = false;
                 axios.get(this.url)
                     .then(response => {
                         this.cars = response.data.cars.data;
                         this.pagination.makePagination(response.data.cars);
+
+                        this.carList = this.cars;
                     })
                     .catch(error => console.log(error));
             },
 
-            getSearchResult() {
-                if (this.search.length > 2) {
-                    axios.get(`/cars?search=${this.search}`)
+            getFilteredResult() {
+                if (/\S/.test(this.search)) {
+                    this.searching = true;
+
+                    axios.get(`${this.url}?search=${this.search}`)
                         .then(response => {
                             this.cars = response.data.cars.data;
+                            this.pagination.makePagination(response.data.cars);
                         })
                         .catch(error => console.log(error));
                 }
+
+                this.cars = this.carList;
             },
 
             getPaginateCars(url) {
                 this.url = url;
-                this.getCars();
+
+                //this.getCars();
+
+                this.searching ? this.getFilteredResult() : this.getCars();
             },
         }
     }

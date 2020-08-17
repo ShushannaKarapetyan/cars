@@ -1,9 +1,11 @@
 require('./bootstrap');
 
+import Vue from 'vue';
 import Cars from "./components/Cars";
 import Create from "./components/Create";
+import VueSwal from 'vue-swal';
 
-import Vue from 'vue';
+Vue.use(VueSwal);
 
 const app = new Vue({
     el: '#app',

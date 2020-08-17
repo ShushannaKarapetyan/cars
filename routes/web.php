@@ -4,15 +4,13 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
-
 Route::group(['middleware' => 'auth'], function () {
     Route::get('/', function () {
         return view('welcome');
     });
 
-    Route::get('/cars/create', 'CarsController@create');
-    Route::post('/cars', 'CarsController@store');
+    Route::get('/cars/create', 'CarsController@create')->name('cars.create');
+    Route::post('/cars', 'CarsController@store')->name('cars.store');
 });
 
-Route::get('/cars', 'CarsController@index');
+Route::get('/cars', 'CarsController@index')->name('cars.index');
