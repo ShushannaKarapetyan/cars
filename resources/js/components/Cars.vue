@@ -1,4 +1,4 @@
-<template>
+<template id="grid-template">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -7,18 +7,20 @@
                         <div class="card-title float-left">
                             <h3>Cars</h3>
                         </div>
-                        <div class="form-group float-right">
-                            <div class="search-box d-flex">
+                        <div class="form-group float-right col-md-6">
+                            <div class="search-box">
                                 <input type="text"
                                        name="search"
-                                       @keydown.enter="getFilteredResult()"
                                        v-model="search"
                                        placeholder="Search by make..."
-                                       class="form-control search">
-                                <button type="submit" @click="getFilteredResult()">
+                                       class="form-control search"
+                                       @keyup="clear()"
+                                       @keydown.enter="getCars()">
+                                <button type="submit" @click="getCars()">
                                     <i class="fas fa-search"></i>
                                 </button>
                             </div>
+                            <span class="text-danger" v-if="searchError">{{ searchError }}</span>
                         </div>
                     </div>
                     <div class="card-body">
@@ -46,26 +48,27 @@
                             <h2 v-else>No cars.</h2>
                         </div>
                     </div>
-                    <div v-if="cars.length" class="card-footer">
+                    <div v-if="last_page > 1" class="card-footer">
                         <div class="pagination">
                             <ul>
-                                <li :class="[{disabled:!pagination.paginate.prev_page_url}]" class="page-item">
+                                <li :class="[{disabled:!prev_page}]" class="page-item">
                                     <a href="#"
                                        class="page-link"
-                                       @click="getPaginateCars(pagination.paginate.prev_page_url)">
+                                       @click="prev(url + prev_page)">
                                         Previous
                                     </a>
                                 </li>
                                 <li class="page-item disabled">
                                     <a class="page-link text-dark" href="#">
-                                        Page {{ pagination.paginate.current_page }} of {{ pagination.paginate.last_page
+                                        Page {{ current_page }} of {{
+                                        last_page
                                         }}
                                     </a>
                                 </li>
-                                <li :class="[{disabled:!pagination.paginate.next_page_url}]" class="page-item">
+                                <li :class="[{disabled:(current_page === last_page)}]" class="page-item">
                                     <a href="#"
                                        class="page-link"
-                                       @click="getPaginateCars(pagination.paginate.next_page_url)">
+                                       @click="next(url + next_page)">
                                         Next
                                     </a>
                                 </li>
@@ -79,19 +82,19 @@
 </template>
 
 <script>
-    import Pagination from "../helpers/pagination";
-
     export default {
         name: "Cars",
 
         data() {
             return {
-                cars: [],
-                carList: [],
+                cars: {},
                 search: '',
-                url: '/cars',
-                pagination: new Pagination(),
-                searching: false,
+                url: location.origin + location.pathname + "?page=",
+                current_page: 1,
+                last_page: '',
+                next_page: '',
+                prev_page: '',
+                searchError: '',
             }
         },
 
@@ -99,41 +102,50 @@
             this.getCars();
         },
 
+        watch: {
+            'search': function (val, oldVal) {
+                if (val !== oldVal) {
+                    this.current_page = 1;
+                }
+            },
+        },
+
         methods: {
             getCars() {
-                this.searching = false;
-                axios.get(this.url)
+                axios.get('/cars', {
+                        params: {
+                            'page': this.current_page,
+                            'search': this.search,
+                        }
+                    }
+                )
                     .then(response => {
                         this.cars = response.data.cars.data;
-                        this.pagination.makePagination(response.data.cars);
-
-                        this.carList = this.cars;
+                        this.current_page = response.data.cars.current_page;
+                        this.next_page = response.data.cars.current_page + 1;
+                        this.prev_page = response.data.cars.current_page - 1;
+                        this.last_page = response.data.cars.last_page;
                     })
-                    .catch(error => console.log(error));
+                    .catch(error => {
+                        this.searchError = error.response.data.errors.search[0];
+                    });
             },
 
-            getFilteredResult() {
-                if (/\S/.test(this.search)) {
-                    this.searching = true;
+            prev() {
+                this.current_page -= 1;
 
-                    axios.get(`${this.url}?search=${this.search}`)
-                        .then(response => {
-                            this.cars = response.data.cars.data;
-                            this.pagination.makePagination(response.data.cars);
-                        })
-                        .catch(error => console.log(error));
-                }
-
-                this.cars = this.carList;
+                this.getCars();
             },
 
-            getPaginateCars(url) {
-                this.url = url;
+            next() {
+                this.current_page += 1;
 
-                //this.getCars();
-
-                this.searching ? this.getFilteredResult() : this.getCars();
+                this.getCars();
             },
+
+            clear() {
+                this.searchError = '';
+            }
         }
     }
 </script>
@@ -148,7 +160,7 @@
         background: transparent;
         right: 20px;
         position: absolute;
-        top: 18px;
+        top: 8px;
         color: #a7a2a2;
     }
 

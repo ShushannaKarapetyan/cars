@@ -1908,7 +1908,6 @@ module.exports = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _helpers_pagination__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/pagination */ "./resources/js/helpers/pagination.js");
 //
 //
 //
@@ -1989,57 +1988,62 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "Cars",
   data: function data() {
     return {
-      cars: [],
-      carList: [],
+      cars: {},
       search: '',
-      url: '/cars',
-      pagination: new _helpers_pagination__WEBPACK_IMPORTED_MODULE_0__["default"](),
-      searching: false
+      url: location.origin + location.pathname + "?page=",
+      current_page: 1,
+      last_page: '',
+      next_page: '',
+      prev_page: '',
+      searchError: ''
     };
   },
   mounted: function mounted() {
     this.getCars();
   },
+  watch: {
+    'search': function search(val, oldVal) {
+      if (val !== oldVal) {
+        this.current_page = 1;
+      }
+    }
+  },
   methods: {
     getCars: function getCars() {
       var _this = this;
 
-      this.searching = false;
-      axios.get(this.url).then(function (response) {
+      axios.get('/cars', {
+        params: {
+          'page': this.current_page,
+          'search': this.search
+        }
+      }).then(function (response) {
         _this.cars = response.data.cars.data;
-
-        _this.pagination.makePagination(response.data.cars);
-
-        _this.carList = _this.cars;
+        _this.current_page = response.data.cars.current_page;
+        _this.next_page = response.data.cars.current_page + 1;
+        _this.prev_page = response.data.cars.current_page - 1;
+        _this.last_page = response.data.cars.last_page;
       })["catch"](function (error) {
-        return console.log(error);
+        _this.searchError = error.response.data.errors.search[0];
       });
     },
-    getFilteredResult: function getFilteredResult() {
-      var _this2 = this;
-
-      if (/\S/.test(this.search)) {
-        this.searching = true;
-        axios.get("".concat(this.url, "?search=").concat(this.search)).then(function (response) {
-          _this2.cars = response.data.cars.data;
-
-          _this2.pagination.makePagination(response.data.cars);
-        })["catch"](function (error) {
-          return console.log(error);
-        });
-      }
-
-      this.cars = this.carList;
+    prev: function prev() {
+      this.current_page -= 1;
+      this.getCars();
     },
-    getPaginateCars: function getPaginateCars(url) {
-      this.url = url; //this.getCars();
-
-      this.searching ? this.getFilteredResult() : this.getCars();
+    next: function next() {
+      this.current_page += 1;
+      this.getCars();
+    },
+    clear: function clear() {
+      this.searchError = '';
     }
   }
 });
@@ -6643,7 +6647,7 @@ exports = module.exports = __webpack_require__(/*! ../../../node_modules/css-loa
 
 
 // module
-exports.push([module.i, "\n.search[data-v-b8156aec] {\n    position: relative;\n}\n.search-box button[data-v-b8156aec] {\n    border: none;\n    background: transparent;\n    right: 20px;\n    position: absolute;\n    top: 18px;\n    color: #a7a2a2;\n}\n.search-box button[data-v-b8156aec]:focus {\n    outline: none;\n}\n.pagination ul[data-v-b8156aec] {\n    list-style: none;\n}\n.pagination ul li[data-v-b8156aec] {\n    float: left;\n}\n", ""]);
+exports.push([module.i, "\n.search[data-v-b8156aec] {\n    position: relative;\n}\n.search-box button[data-v-b8156aec] {\n    border: none;\n    background: transparent;\n    right: 20px;\n    position: absolute;\n    top: 8px;\n    color: #a7a2a2;\n}\n.search-box button[data-v-b8156aec]:focus {\n    outline: none;\n}\n.pagination ul[data-v-b8156aec] {\n    list-style: none;\n}\n.pagination ul li[data-v-b8156aec] {\n    float: left;\n}\n", ""]);
 
 // exports
 
@@ -56515,8 +56519,8 @@ var render = function() {
           _c("div", { staticClass: "card-header" }, [
             _vm._m(0),
             _vm._v(" "),
-            _c("div", { staticClass: "form-group float-right" }, [
-              _c("div", { staticClass: "search-box d-flex" }, [
+            _c("div", { staticClass: "form-group float-right col-md-6" }, [
+              _c("div", { staticClass: "search-box" }, [
                 _c("input", {
                   directives: [
                     {
@@ -56534,6 +56538,9 @@ var render = function() {
                   },
                   domProps: { value: _vm.search },
                   on: {
+                    keyup: function($event) {
+                      return _vm.clear()
+                    },
                     keydown: function($event) {
                       if (
                         !$event.type.indexOf("key") &&
@@ -56541,7 +56548,7 @@ var render = function() {
                       ) {
                         return null
                       }
-                      return _vm.getFilteredResult()
+                      return _vm.getCars()
                     },
                     input: function($event) {
                       if ($event.target.composing) {
@@ -56558,13 +56565,19 @@ var render = function() {
                     attrs: { type: "submit" },
                     on: {
                       click: function($event) {
-                        return _vm.getFilteredResult()
+                        return _vm.getCars()
                       }
                     }
                   },
                   [_c("i", { staticClass: "fas fa-search" })]
                 )
-              ])
+              ]),
+              _vm._v(" "),
+              _vm.searchError
+                ? _c("span", { staticClass: "text-danger" }, [
+                    _vm._v(_vm._s(_vm.searchError))
+                  ])
+                : _vm._e()
             ])
           ]),
           _vm._v(" "),
@@ -56600,7 +56613,7 @@ var render = function() {
             ])
           ]),
           _vm._v(" "),
-          _vm.cars.length
+          _vm.last_page > 1
             ? _c("div", { staticClass: "card-footer" }, [
                 _c("div", { staticClass: "pagination" }, [
                   _c("ul", [
@@ -56608,9 +56621,7 @@ var render = function() {
                       "li",
                       {
                         staticClass: "page-item",
-                        class: [
-                          { disabled: !_vm.pagination.paginate.prev_page_url }
-                        ]
+                        class: [{ disabled: !_vm.prev_page }]
                       },
                       [
                         _c(
@@ -56620,9 +56631,7 @@ var render = function() {
                             attrs: { href: "#" },
                             on: {
                               click: function($event) {
-                                return _vm.getPaginateCars(
-                                  _vm.pagination.paginate.prev_page_url
-                                )
+                                return _vm.prev(_vm.url + _vm.prev_page)
                               }
                             }
                           },
@@ -56645,9 +56654,9 @@ var render = function() {
                         [
                           _vm._v(
                             "\n                                    Page " +
-                              _vm._s(_vm.pagination.paginate.current_page) +
+                              _vm._s(_vm.current_page) +
                               " of " +
-                              _vm._s(_vm.pagination.paginate.last_page) +
+                              _vm._s(_vm.last_page) +
                               "\n                                "
                           )
                         ]
@@ -56659,7 +56668,7 @@ var render = function() {
                       {
                         staticClass: "page-item",
                         class: [
-                          { disabled: !_vm.pagination.paginate.next_page_url }
+                          { disabled: _vm.current_page === _vm.last_page }
                         ]
                       },
                       [
@@ -56670,9 +56679,7 @@ var render = function() {
                             attrs: { href: "#" },
                             on: {
                               click: function($event) {
-                                return _vm.getPaginateCars(
-                                  _vm.pagination.paginate.next_page_url
-                                )
+                                return _vm.next(_vm.url + _vm.next_page)
                               }
                             }
                           },
@@ -74317,47 +74324,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Create_vue_vue_type_template_id_67c71db2___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
 
 
-
-/***/ }),
-
-/***/ "./resources/js/helpers/pagination.js":
-/*!********************************************!*\
-  !*** ./resources/js/helpers/pagination.js ***!
-  \********************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var Pagination = /*#__PURE__*/function () {
-  function Pagination() {
-    _classCallCheck(this, Pagination);
-
-    this.paginate = {};
-  }
-
-  _createClass(Pagination, [{
-    key: "makePagination",
-    value: function makePagination(data) {
-      this.paginate = {
-        current_page: data.current_page,
-        last_page: data.last_page,
-        next_page_url: data.next_page_url,
-        prev_page_url: data.prev_page_url
-      };
-    }
-  }]);
-
-  return Pagination;
-}();
-
-/* harmony default export */ __webpack_exports__["default"] = (Pagination);
 
 /***/ }),
 
