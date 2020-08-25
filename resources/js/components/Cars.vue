@@ -1,4 +1,4 @@
-<template id="grid-template">
+<template>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-10">
@@ -14,13 +14,13 @@
                                        v-model="search"
                                        placeholder="Search by make..."
                                        class="form-control search"
-                                       @keyup="clear()"
-                                       @keydown.enter="getCars()">
-                                <button type="submit" @click="getCars()">
+                                       :class="{'is-invalid': searchError}"
+                                       @keydown.enter="getCars(1)">
+                                <button type="submit" @click="getCars(1)">
                                     <i class="fas fa-search"></i>
                                 </button>
+                                <span class="invalid-feedback" v-if="searchError">{{ searchError }}</span>
                             </div>
-                            <span class="text-danger" v-if="searchError">{{ searchError }}</span>
                         </div>
                     </div>
                     <div class="card-body">
@@ -51,7 +51,8 @@
                     <div v-if="last_page > 1" class="card-footer">
                         <div class="pagination">
                             <ul>
-                                <li :class="[{disabled:!prev_page}]" class="page-item">
+                                <li :class="[{disabled:(!prev_page || searchError)}]"
+                                    class="page-item">
                                     <a href="#"
                                        class="page-link"
                                        @click="prev(url + prev_page)">
@@ -65,7 +66,8 @@
                                         }}
                                     </a>
                                 </li>
-                                <li :class="[{disabled:(current_page === last_page)}]" class="page-item">
+                                <li :class="[{disabled:(current_page === last_page || searchError)}]"
+                                    class="page-item">
                                     <a href="#"
                                        class="page-link"
                                        @click="next(url + next_page)">
@@ -83,13 +85,13 @@
 
 <script>
     export default {
-        name: "Cars",
+        name: 'Cars',
 
         data() {
             return {
                 cars: {},
                 search: '',
-                url: location.origin + location.pathname + "?page=",
+                url: location.origin + location.pathname + '?page=',
                 current_page: 1,
                 last_page: '',
                 next_page: '',
@@ -102,24 +104,18 @@
             this.getCars();
         },
 
-        watch: {
-            'search': function (val, oldVal) {
-                if (val !== oldVal) {
-                    this.current_page = 1;
-                }
-            },
-        },
-
         methods: {
-            getCars() {
+            getCars(page) {
                 axios.get('/cars', {
                         params: {
-                            'page': this.current_page,
+                            'page': page || this.current_page,
                             'search': this.search,
                         }
                     }
                 )
                     .then(response => {
+                        this.searchError = '';
+
                         this.cars = response.data.cars.data;
                         this.current_page = response.data.cars.current_page;
                         this.next_page = response.data.cars.current_page + 1;
@@ -142,11 +138,7 @@
 
                 this.getCars();
             },
-
-            clear() {
-                this.searchError = '';
-            }
-        }
+        },
     }
 </script>
 

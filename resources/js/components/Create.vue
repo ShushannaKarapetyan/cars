@@ -7,7 +7,7 @@
                         Create Car
                     </div>
                     <div class="card-body">
-                        <form @submit.prevent="add" @keydown="clear()">
+                        <form @submit.prevent="add">
                             <div class="card-body">
                                 <div class="form-group col-md-12">
                                     <label for="make">Make</label>
@@ -44,7 +44,6 @@
                                                 format="YYYY"
                                                 placeholder="Year"
                                                 class="w-100"
-                                                @change="clear()"
                                                 :class="{'is-invalid': errors.hasOwnProperty('year')}"
                                                 :input-class="{'form-control':true, 'is-invalid': errors.hasOwnProperty('year')}"
                                             >
@@ -86,7 +85,9 @@
     export default {
         name: 'Create',
 
-        components: {DatePicker},
+        components: {
+            DatePicker,
+        },
 
         data() {
             return {
@@ -115,6 +116,8 @@
                         this.car.model = '';
                         this.dateFull = '';
                         this.car.price = '';
+
+                        this.clear();
 
                         this.$swal('Done!', response.data.message, 'success');
                     })

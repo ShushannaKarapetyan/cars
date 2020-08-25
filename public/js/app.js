@@ -1991,13 +1991,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
-  name: "Cars",
+  name: 'Cars',
   data: function data() {
     return {
       cars: {},
       search: '',
-      url: location.origin + location.pathname + "?page=",
+      url: location.origin + location.pathname + '?page=',
       current_page: 1,
       last_page: '',
       next_page: '',
@@ -2008,23 +2010,17 @@ __webpack_require__.r(__webpack_exports__);
   mounted: function mounted() {
     this.getCars();
   },
-  watch: {
-    'search': function search(val, oldVal) {
-      if (val !== oldVal) {
-        this.current_page = 1;
-      }
-    }
-  },
   methods: {
-    getCars: function getCars() {
+    getCars: function getCars(page) {
       var _this = this;
 
       axios.get('/cars', {
         params: {
-          'page': this.current_page,
+          'page': page || this.current_page,
           'search': this.search
         }
       }).then(function (response) {
+        _this.searchError = '';
         _this.cars = response.data.cars.data;
         _this.current_page = response.data.cars.current_page;
         _this.next_page = response.data.cars.current_page + 1;
@@ -2041,9 +2037,6 @@ __webpack_require__.r(__webpack_exports__);
     next: function next() {
       this.current_page += 1;
       this.getCars();
-    },
-    clear: function clear() {
-      this.searchError = '';
     }
   }
 });
@@ -2062,7 +2055,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
 /* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
 /* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_1__);
-//
 //
 //
 //
@@ -2177,6 +2169,8 @@ __webpack_require__.r(__webpack_exports__);
         _this.car.model = '';
         _this.dateFull = '';
         _this.car.price = '';
+
+        _this.clear();
 
         _this.$swal('Done!', response.data.message, 'success');
       })["catch"](function (error) {
@@ -56531,6 +56525,7 @@ var render = function() {
                     }
                   ],
                   staticClass: "form-control search",
+                  class: { "is-invalid": _vm.searchError },
                   attrs: {
                     type: "text",
                     name: "search",
@@ -56538,9 +56533,6 @@ var render = function() {
                   },
                   domProps: { value: _vm.search },
                   on: {
-                    keyup: function($event) {
-                      return _vm.clear()
-                    },
                     keydown: function($event) {
                       if (
                         !$event.type.indexOf("key") &&
@@ -56548,7 +56540,7 @@ var render = function() {
                       ) {
                         return null
                       }
-                      return _vm.getCars()
+                      return _vm.getCars(1)
                     },
                     input: function($event) {
                       if ($event.target.composing) {
@@ -56565,19 +56557,19 @@ var render = function() {
                     attrs: { type: "submit" },
                     on: {
                       click: function($event) {
-                        return _vm.getCars()
+                        return _vm.getCars(1)
                       }
                     }
                   },
                   [_c("i", { staticClass: "fas fa-search" })]
-                )
-              ]),
-              _vm._v(" "),
-              _vm.searchError
-                ? _c("span", { staticClass: "text-danger" }, [
-                    _vm._v(_vm._s(_vm.searchError))
-                  ])
-                : _vm._e()
+                ),
+                _vm._v(" "),
+                _vm.searchError
+                  ? _c("span", { staticClass: "invalid-feedback" }, [
+                      _vm._v(_vm._s(_vm.searchError))
+                    ])
+                  : _vm._e()
+              ])
             ])
           ]),
           _vm._v(" "),
@@ -56621,7 +56613,7 @@ var render = function() {
                       "li",
                       {
                         staticClass: "page-item",
-                        class: [{ disabled: !_vm.prev_page }]
+                        class: [{ disabled: !_vm.prev_page || _vm.searchError }]
                       },
                       [
                         _c(
@@ -56668,7 +56660,11 @@ var render = function() {
                       {
                         staticClass: "page-item",
                         class: [
-                          { disabled: _vm.current_page === _vm.last_page }
+                          {
+                            disabled:
+                              _vm.current_page === _vm.last_page ||
+                              _vm.searchError
+                          }
                         ]
                       },
                       [
@@ -56765,9 +56761,6 @@ var render = function() {
                   submit: function($event) {
                     $event.preventDefault()
                     return _vm.add($event)
-                  },
-                  keydown: function($event) {
-                    return _vm.clear()
                   }
                 }
               },
@@ -56878,11 +56871,6 @@ var render = function() {
                               "input-class": {
                                 "form-control": true,
                                 "is-invalid": _vm.errors.hasOwnProperty("year")
-                              }
-                            },
-                            on: {
-                              change: function($event) {
-                                return _vm.clear()
                               }
                             },
                             model: {

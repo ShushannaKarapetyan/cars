@@ -9,8 +9,9 @@ Vue.use(VueSwal);
 
 const app = new Vue({
     el: '#app',
+
     components: {
         Cars,
         Create,
-    }
+    },
 });
